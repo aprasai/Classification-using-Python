@@ -1,0 +1,51 @@
+%config IPcompleter.greedy = True
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+#Importing the file
+dataset = pd.read_csv('XXX.csv')
+y = dataset['DEPENDENT VARIABLE']
+x = dataset.iloc[:,0:4] #INDEPENDENT VARIABLE
+x = pd.get_dummies(x ,'CATEGORICAL')
+#Avoiding dummy trap
+x = x.iloc[:,0:len(x.columns)-1] #removing a dummy
+
+#Splitting training and test sets
+from sklearn.model_selection import train_test_split
+x_train, x_test, y_train, y_test = train_test_split(x,y, test_size = .25, random_state=123)
+
+#Feature scaling to give equal weights to different indepedent variables
+from sklearn.preprocessing import StandardScaler
+sc_x = StandardScaler()
+x_train = sc_x.fit_transform(x_train)
+x_test = sc_x.transform(x_test)
+
+#Logistic regression model
+from sklearn.linear_model import LogisticRegression
+classifier = LogisticRegression(random_state=0)
+classifier.fit(x_train,y_train)
+
+#Prediction
+y_pred = pd.DataFrame(classifier.predict(x_test))
+
+#Confusion matrix
+from sklearn.metrics import confusion_matrix
+cm = pd.DataFrame(confusion_matrix(y_test, y_pred))
+print (cm) #checks right vs wrong predictions
+
+#Visualization
+y_train = y_train.reset_index().drop(columns='index')
+for i in range (len(x_train)):
+    if y_train['DEPENDENT VARIABLE'][i] == 0:
+        pointColor = 'red'
+    else:
+        pointColor = 'blue'
+    plt.scatter(x_train[i,0],x_train[i,1],color=pointColor)
+
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.show()
+
+
+
