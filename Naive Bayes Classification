@@ -1,0 +1,79 @@
+%config IPcompleter.greedy = True
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+#Importing the file
+dataset = pd.read_csv('XXX.csv')
+y = dataset['DEPENDENT VARIABLE']
+x = dataset.iloc[:,2:4] #INDEPENDENT VARIABLE
+#if categorical variable
+#x = pd.get_dummies(x ,'CATEGORICAL')
+#Avoiding dummy trap
+#x = x.iloc[:,0:len(x.columns)-1] #removing a dummy
+
+#Splitting training and test sets
+from sklearn.model_selection import train_test_split
+x_train, x_test, y_train, y_test = train_test_split(x,y, test_size = .25, random_state=123)
+
+#Feature scaling to give equal weights to different indepedent variables
+from sklearn.preprocessing import StandardScaler
+sc_x = StandardScaler()
+x_train = sc_x.fit_transform(x_train)
+x_test = sc_x.transform(x_test)
+
+#Naive Bayes model
+from sklearn.naive_bayes import GaussianNB
+classifier = GaussianNB()
+classifier.fit(x_train, y_train)
+
+#Prediction
+y_pred = pd.DataFrame(classifier.predict(x_test))
+
+#Confusion matrix
+#confusion matrix gives the result in the format below
+'''
+              Predicted:No  Predicted:Yes
+Actual:No
+Actual:Yes
+'''
+from sklearn.metrics import confusion_matrix
+cm = pd.DataFrame(confusion_matrix(y_test, y_pred))
+print (cm) #checks right vs wrong predictions
+
+#Visualization for two - dimensional
+# Visualising the Training set results
+from matplotlib.colors import ListedColormap
+X_set, y_set = x_train, y_train
+X1, X2 = np.meshgrid(np.arange(start = X_set[:, 0].min() - 1, stop = X_set[:, 0].max() + 1, step = 0.01),
+                     np.arange(start = X_set[:, 1].min() - 1, stop = X_set[:, 1].max() + 1, step = 0.01))
+plt.contourf(X1, X2, classifier.predict(np.array([X1.ravel(), X2.ravel()]).T).reshape(X1.shape),
+             alpha = 0.75, cmap = ListedColormap(('white', 'blue')))
+plt.xlim(X1.min(), X1.max())
+plt.ylim(X2.min(), X2.max())
+for i, j in enumerate(np.unique(y_set)):
+    plt.scatter(X_set[y_set == j, 0], X_set[y_set == j, 1],
+                c = ListedColormap(('red', 'black'))(i), label = j)
+plt.title('NB (Training set)')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.legend()
+plt.show()
+
+# Visualising the Test set results
+from matplotlib.colors import ListedColormap
+X_set, y_set = x_test, y_test
+X1, X2 = np.meshgrid(np.arange(start = X_set[:, 0].min() - 1, stop = X_set[:, 0].max() + 1, step = 0.01),
+                     np.arange(start = X_set[:, 1].min() - 1, stop = X_set[:, 1].max() + 1, step = 0.01))
+plt.contourf(X1, X2, classifier.predict(np.array([X1.ravel(), X2.ravel()]).T).reshape(X1.shape),
+             alpha = 0.75, cmap = ListedColormap(('white', 'blue')))
+plt.xlim(X1.min(), X1.max())
+plt.ylim(X2.min(), X2.max())
+for i, j in enumerate(np.unique(y_set)):
+    plt.scatter(X_set[y_set == j, 0], X_set[y_set == j, 1],
+                c = ListedColormap(('red', 'black'))(i), label = j)
+plt.title('NB (Test set)')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.legend()
+plt.show()
